@@ -1,7 +1,7 @@
 {
   "appId": "com.sambo.thepaths",
   "appName": "The Paths",
-  "webDir": "www",
+  "webDir": "WWW",
   "bundledWebRuntime": false,
   "android": {
     "allowMixedContent": true
