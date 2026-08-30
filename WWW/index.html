@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#030308">
+  <title>The Paths - System Interface</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <style>
+    :root {
+      --cyan-bright: #00e5ff;
+      --purple-neon: #a020f0;
+      --purple-dark: #3a0066;
+      --purple-border: #6a0dad;
+      --red-alert: #ff003c;
+      --green-ok: #00ff9c;
+      --orange-warn: #ffae00;
+      --bg-dark: #030308;
+      --text-gray: #8899a6;
+    }
+
+    * { box-sizing: border-box; user-select: none; font-family: monospace, sans-serif; }
+
+    body {
+      background-color: #000;
+      color: #fff;
+      margin: 0;
+      padding: 12px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .system-window {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-dark);
+      border: 2px solid var(--cyan-bright);
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+      padding: 16px;
+      clip-path: polygon(0 0, 94% 0, 100% 6%, 100% 100%, 6% 100%, 0 94%);
+    }
+
+    .system-warning {
+      border: 1px solid var(--cyan-bright);
+      color: var(--cyan-bright);
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-align: center;
+      padding: 6px;
+      margin-bottom: 14px;
+      background: rgba(0, 229, 255, 0.05);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .gear-btn {
+      background: transparent;
+      border: none;
+      color: var(--cyan-bright);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .system-header {
+      border-bottom: 1px solid var(--cyan-bright);
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .system-title { font-size: 1.5rem; font-weight: 900; color: var(--cyan-bright); margin: 0; letter-spacing: 2px; }
+    .player-name { font-size: 0.9rem; color: #fff; font-weight: bold; letter-spacing: 1px; }
+    .job-title { text-align: right; color: var(--purple-neon); font-size: 0.75rem; font-weight: bold; }
+
+    .streak-container {
+      background: rgba(40, 0, 60, 0.4);
+      border: 1px solid var(--purple-border);
+      padding: 10px;
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .streak-title { font-size: 0.75rem; color: var(--purple-neon); font-weight: bold; }
+    .streak-count { font-size: 1.3rem; color: var(--cyan-bright); font-weight: 900; }
+
+    .btn-relapse {
+      background: transparent;
+      border: 1px solid var(--red-alert);
+      color: var(--red-alert);
+      font-size: 0.65rem;
+      padding: 6px 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: rgba(5, 5, 15, 0.8);
+      border: 1px solid #112233;
+      padding: 10px;
+      margin-bottom: 14px;
+      font-size: 0.8rem;
+    }
+
+    .profile-item { display: flex; justify-content: space-between; color: var(--text-gray); }
+    .profile-val { color: var(--cyan-bright); font-weight: bold; }
+    .error-val { color: var(--red-alert); font-weight: bold; }
+
+    .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .stat-label { color: var(--text-gray); font-size: 0.85rem; letter-spacing: 1px; }
+    .stat-value { color: var(--cyan-bright); font-weight: bold; font-size: 0.9rem; }
+
+    .stat-control { display: flex; align-items: center; gap: 8px; }
+    .btn-stat {
+      background: transparent;
+      border: 1px solid var(--cyan-bright);
+      color: var(--cyan-bright);
+      width: 26px; height: 26px;
+      cursor: pointer; font-weight: bold;
+      font-size: 1rem;
+      border-radius: 2px;
+    }
+    .btn-stat:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-stat:active:not(:disabled) { background: rgba(0, 229, 255, 0.2); }
+
+    .xp-bar-track {
+      width: 100%;
+      height: 6px;
+      background: #111;
+      border: 1px solid #223;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .xp-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple-neon), var(--cyan-bright));
+      transition: width 0.3s ease;
+    }
+    .fatigue-bar-track {
+      width: 100%;
+      height: 6px;
+      background: #111;
+      border: 1px solid #223;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .fatigue-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--orange-warn), var(--red-alert));
+      transition: width 0.3s ease;
+    }
+
+    .quest-box {
+      margin-top: 16px;
+      background: rgba(30, 0, 50, 0.3);
+      border-left: 3px solid var(--purple-neon);
+      padding: 10px;
+      font-size: 0.8rem;
+    }
+
+    .quest-title { color: var(--purple-neon); font-weight: bold; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .quest-item { display: flex; align-items: center; gap: 8px; margin-top: 6px; color: #fff; }
+    .quest-item.done label { color: var(--text-gray); text-decoration: line-through; }
+    .quest-timer { font-size: 0.65rem; color: var(--text-gray); }
+    .quest-item label { flex: 1; }
+
+    .footer-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+      gap: 8px;
+    }
+    .btn-small {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--text-gray);
+      color: var(--text-gray);
+      font-size: 0.65rem;
+      padding: 8px 4px;
+      cursor: pointer;
+      letter-spacing: 1px;
+    }
+    .btn-small:active { border-color: var(--cyan-bright); color: var(--cyan-bright); }
+
+    .sync-status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.65rem;
+      color: var(--text-gray);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #112233;
+    }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; background: var(--text-gray); }
+    .sync-dot.ok { background: var(--green-ok); }
+    .sync-dot.err { background: var(--red-alert); }
+
+    input[type="file"] { display: none; }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--bg-dark);
+      border: 1px solid var(--purple-neon);
+      color: var(--cyan-bright);
+      padding: 10px 16px;
+      font-size: 0.75rem;
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      max-width: 90%;
+      text-align: center;
+      z-index: 999;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Settings modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; justify-content: center; }
+    .modal-box {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg-dark);
+      border: 2px solid var(--purple-neon);
+      box-shadow: 0 0 12px rgba(160, 32, 240, 0.5);
+      padding: 16px;
+      height: fit-content;
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--purple-neon); padding-bottom: 8px; margin-bottom: 12px; }
+    .modal-title { color: var(--purple-neon); font-weight: bold; letter-spacing: 1px; font-size: 0.95rem; }
+    .close-btn { background: transparent; border: 1px solid var(--text-gray); color: var(--text-gray); cursor: pointer; padding: 2px 8px; }
+
+    .section-label { color: var(--cyan-bright); font-size: 0.75rem; font-weight: bold; letter-spacing: 1px; margin: 14px 0 8px; }
+    .field-row { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+    .field-row label { font-size: 0.65rem; color: var(--text-gray); letter-spacing: 1px; }
+    .field-row input {
+      background: #05050f;
+      border: 1px solid #223;
+      color: #fff;
+      padding: 7px 8px;
+      font-size: 0.8rem;
+      font-family: monospace;
+    }
+    .field-row input:focus { outline: none; border-color: var(--cyan-bright); }
+
+    .quest-edit-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+    .quest-edit-row input[type="text"] { flex: 1; }
+    .btn-del {
+      background: transparent;
+      border: 1px solid var(--red-alert);
+      color: var(--red-alert);
+      width: 26px; height: 30px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .btn-add-quest {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed var(--cyan-bright);
+      color: var(--cyan-bright);
+      padding: 8px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      margin-top: 4px;
+    }
+    .btn-primary {
+      width: 100%;
+      background: rgba(160,32,240,0.15);
+      border: 1px solid var(--purple-neon);
+      color: var(--purple-neon);
+      padding: 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      margin-top: 8px;
+    }
+    .hint { font-size: 0.62rem; color: var(--text-gray); line-height: 1.4; margin-top: 4px; }
+
+    /* Boss battle */
+    .boss-box {
+      margin-top: 12px;
+      background: rgba(60, 0, 0, 0.25);
+      border-left: 3px solid var(--red-alert);
+      padding: 10px;
+      font-size: 0.8rem;
+    }
+    .boss-title { color: var(--red-alert); font-weight: bold; margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .boss-bar-track { width: 100%; height: 8px; background: #111; border: 1px solid #331; overflow: hidden; }
+    .boss-bar-fill { height: 100%; background: linear-gradient(90deg, var(--orange-warn), var(--red-alert)); transition: width 0.3s ease; }
+
+    /* Journal */
+    .journal-box { margin-top: 12px; }
+    .journal-entry {
+      border-left: 2px solid var(--purple-border);
+      padding: 6px 8px;
+      margin-bottom: 6px;
+      font-size: 0.72rem;
+      color: var(--text-gray);
+    }
+    .journal-entry .j-date { color: var(--cyan-bright); font-size: 0.65rem; display: block; margin-bottom: 2px; }
+    .journal-entry.relapse { border-left-color: var(--red-alert); }
+    textarea#journal-input {
+      width: 100%;
+      background: #05050f;
+      border: 1px solid #223;
+      color: #fff;
+      padding: 8px;
+      font-size: 0.8rem;
+      font-family: monospace;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    /* Achievements */
+    .ach-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid #112233;
+      font-size: 0.75rem;
+    }
+    .ach-item.locked { color: var(--text-gray); opacity: 0.5; }
+    .ach-item.unlocked { color: var(--green-ok); }
+
+    /* History chart */
+    .chart-box { margin-top: 12px; }
+    .chart-legend { display: flex; gap: 12px; font-size: 0.65rem; margin-bottom: 4px; }
+    .chart-legend span { display: flex; align-items: center; gap: 4px; }
+    .legend-dot { width: 8px; height: 8px; display: inline-block; border-radius: 50%; }
+
+    /* Training timer */
+    .timer-box { margin-top: 12px; }
+    .timer-mode-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
+    .timer-mode-btn {
+      flex: 1;
+      background: transparent;
+      border: 1px solid var(--text-gray);
+      color: var(--text-gray);
+      padding: 6px;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .timer-mode-btn.active { border-color: var(--cyan-bright); color: var(--cyan-bright); }
+    .timer-field-row { display: flex; gap: 8px; margin-bottom: 8px; }
+    .timer-field-row .field-row { flex: 1; margin-bottom: 0; }
+    .timer-display {
+      text-align: center;
+      font-size: 2.4rem;
+      font-weight: 900;
+      color: var(--cyan-bright);
+      letter-spacing: 2px;
+      margin: 10px 0 4px;
+    }
+    .timer-phase-label {
+      text-align: center;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      color: var(--text-gray);
+    }
+    .timer-phase-label.work { color: var(--cyan-bright); }
+    .timer-phase-label.rest { color: var(--orange-warn); }
+    .timer-controls { display: flex; gap: 6px; margin-top: 8px; }
+    .timer-controls button {
+      flex: 1;
+      padding: 10px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border: 1px solid var(--purple-neon);
+      background: rgba(160,32,240,0.12);
+      color: var(--purple-neon);
+    }
+    .timer-controls button:disabled { opacity: 0.3; cursor: not-allowed; }
+    select#timer-stat-select {
+      width: 100%;
+      background: #05050f;
+      border: 1px solid #223;
+      color: #fff;
+      padding: 7px 8px;
+      font-size: 0.8rem;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="system-window">
+    <div class="system-warning">
+      <span>[ SYSTEM OVERRIDE: ACTIVE ]</span>
+      <button class="gear-btn" onclick="openSettings()" title="Settings">&#9881;</button>
+    </div>
+
+    <div class="system-header">
+      <div>
+        <h2 class="system-title">STATUS</h2>
+        <span class="player-name" id="hdr-name">NAME: SAMBO</span>
+      </div>
+      <div class="job-title">
+        <div id="hdr-job">JOB: UNZA STUDENT</div>
+        <div id="hdr-title">TITLE: THE ATTACK TITAN</div>
+      </div>
+    </div>
+
+    <div class="streak-container">
+      <div>
+        <div class="streak-title">[ AFTER THE RUMBLING ]</div>
+        <div style="font-size: 0.65rem; color: var(--text-gray);">DAYS OF SURVIVAL</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="text-align: center;">
+          <div style="font-size: 0.6rem; color: var(--cyan-bright);">DAY</div>
+          <span class="streak-count" id="streak-days">0</span>
+        </div>
+        <button class="btn-relapse" onclick="resetStreak()">WALL BREACHED</button>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+      <div class="profile-item"><span>AGE:</span> <span class="profile-val" id="p-age">20</span></div>
+      <div class="profile-item"><span>HEIGHT:</span> <span class="profile-val" id="p-height">187 CM</span></div>
+      <div class="profile-item"><span>WEIGHT:</span> <span class="profile-val" id="p-weight">67 KG</span></div>
+      <div class="profile-item"><span>LOCATION:</span> <span class="error-val" id="p-location">UNKNOWN</span></div>
+    </div>
+
+    <div class="status-row">
+      <span class="stat-label">LEVEL</span>
+      <span class="stat-value" id="level" style="color: #fff;">1</span>
+    </div>
+    <div class="xp-bar-track"><div class="xp-bar-fill" id="xp-fill" style="width:0%"></div></div>
+
+    <div class="status-row">
+      <span class="stat-label">FATIGUE</span>
+      <span class="stat-value" id="fatigue" style="color: var(--red-alert);">0%</span>
+    </div>
+    <div class="fatigue-bar-track"><div class="fatigue-bar-fill" id="fatigue-fill" style="width:0%"></div></div>
+
+    <div style="height: 1px; background: rgba(0, 229, 255, 0.2); margin: 12px 0;"></div>
+
+    <div class="status-row">
+      <span class="stat-label">STRENGTH</span>
+      <div class="stat-control">
+        <span class="stat-value" id="str">10%</span>
+        <button class="btn-stat" onclick="addStat('str')">+</button>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <span class="stat-label">VITALITY</span>
+      <div class="stat-control">
+        <span class="stat-value" id="vit">10%</span>
+        <button class="btn-stat" onclick="addStat('vit')">+</button>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <span class="stat-label">AGILITY</span>
+      <div class="stat-control">
+        <span class="stat-value" id="agi">10%</span>
+        <button class="btn-stat" onclick="addStat('agi')">+</button>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <span class="stat-label">SPEED</span>
+      <div class="stat-control">
+        <span class="stat-value" id="spd">12 km/h</span>
+        <button class="btn-stat" onclick="addStat('spd')">+</button>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <span class="stat-label">INTELLIGENCE</span>
+      <div class="stat-control">
+        <span class="stat-value" id="int">10%</span>
+        <button class="btn-stat" onclick="addStat('int')">+</button>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <span class="stat-label">IQ LEVEL</span>
+      <div class="stat-control">
+        <span class="stat-value" id="iq" style="color: var(--purple-neon);">120</span>
+        <button class="btn-stat" onclick="addStat('iq')">+</button>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <span class="stat-label">SENSE</span>
+      <div class="stat-control">
+        <span class="stat-value" id="sen">10%</span>
+        <button class="btn-stat" onclick="addStat('sen')">+</button>
+      </div>
+    </div>
+
+    <div class="status-row" style="margin-top: 12px;">
+      <span class="stat-label" style="color: #fff;">AVAILABLE POINTS</span>
+      <span class="stat-value" id="pts" style="color: var(--purple-neon);">5</span>
+    </div>
+
+    <div class="quest-box">
+      <div class="quest-title">
+        <span>[DAILY QUEST LOG]</span>
+        <span class="quest-timer" id="quest-reset-timer"></span>
+      </div>
+      <div id="quest-list"></div>
+    </div>
+
+    <div class="boss-box">
+      <div class="boss-title">
+        <span>[ WEEKLY BOSS: THE COLOSSAL ]</span>
+        <span id="boss-progress-text">0/7</span>
+      </div>
+      <div class="boss-bar-track"><div class="boss-bar-fill" id="boss-bar-fill" style="width:0%"></div></div>
+      <div class="hint">Complete all daily quests to chip away at the boss. Full week defeats it for a big reward.</div>
+    </div>
+
+    <div class="quest-box timer-box">
+      <div class="quest-title"><span>[ TRAINING SESSION ]</span></div>
+
+      <div class="field-row">
+        <label>TRAINS WHICH STAT</label>
+        <select id="timer-stat-select">
+          <option value="str">STRENGTH</option>
+          <option value="vit">VITALITY</option>
+          <option value="agi">AGILITY</option>
+          <option value="spd">SPEED</option>
+          <option value="int">INTELLIGENCE</option>
+          <option value="iq">IQ LEVEL</option>
+          <option value="sen">SENSE</option>
+        </select>
+      </div>
+
+      <div class="timer-mode-toggle">
+        <button class="timer-mode-btn active" id="mode-btn-countdown" onclick="setTimerMode('countdown')">COUNTDOWN</button>
+        <button class="timer-mode-btn" id="mode-btn-interval" onclick="setTimerMode('interval')">INTERVAL</button>
+      </div>
+
+      <div id="countdown-fields">
+        <div class="field-row"><label>MINUTES</label><input type="number" id="cd-minutes" value="20" min="1" max="180"></div>
+      </div>
+
+      <div id="interval-fields" style="display:none;">
+        <div class="timer-field-row">
+          <div class="field-row"><label>WORK (SEC)</label><input type="number" id="iv-work" value="30" min="5" max="600"></div>
+          <div class="field-row"><label>REST (SEC)</label><input type="number" id="iv-rest" value="10" min="0" max="300"></div>
+        </div>
+        <div class="field-row"><label>ROUNDS</label><input type="number" id="iv-rounds" value="8" min="1" max="50"></div>
+      </div>
+
+      <div class="timer-phase-label" id="timer-phase-label"></div>
+      <div class="timer-display" id="timer-display">00:00</div>
+
+      <div class="timer-controls">
+        <button id="timer-start-btn" onclick="startTimer()">START</button>
+        <button id="timer-pause-btn" onclick="pauseTimer
